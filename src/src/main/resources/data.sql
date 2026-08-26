@@ -1,1 +1,0 @@
--- SQL seeding is handled dynamically in Java by DataInitializer.java
