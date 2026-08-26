@@ -1,5 +1,4 @@
-# backend-developer-as-final-64202-anand
-Final Project Assignment - This repository contains the complete final project code and documentation.
+
 # Resource Booking System
 
 A secure, RESTful Resource Booking System built with Spring Boot 2.7.18, Java 16/17+, Spring Security, JWT, and Hibernate/JPA (with support for MySQL, PostgreSQL, and H2 database).
