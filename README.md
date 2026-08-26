@@ -1,7 +1,6 @@
-
 # Resource Booking System
 
-A secure, RESTful Resource Booking System built with Spring Boot 2.7.18, Java 16/17+, Spring Security, JWT, and Hibernate/JPA (with support for MySQL, PostgreSQL, and H2 database).
+A secure, RESTful Resource Booking System built with **Spring Boot 2.7.18**, **Java 16/17+**, **Spring Security**, **JWT**, and **Hibernate/JPA** (with support for MySQL, PostgreSQL, and H2 database).
 
 The system allows users to search available resources and manage their own reservations. Administrators have full CRUD control over all resources and reservations.
 
@@ -9,25 +8,25 @@ The system allows users to search available resources and manage their own reser
 
 ## 🚀 Features
 
-- JWT-Based Authentication: Login at `POST /auth/login` to obtain a stateless JWT token.
-- Role-Based Access Control (RBAC): Secure authorization for `ADMIN` and `USER` roles using Spring Security's `@PreAuthorize` method security.
-- Resource Management: Complete CRUD for resources (restricted to `ADMIN` for write operations; `USER` has read-only access).
-- Reservation Lifecycle: Manage bookings with statuses: `PENDING`, `CONFIRMED`, and `CANCELLED`.
-- Reservation Ownership: Users can only see, modify, or delete their own reservations. Administrators have access to view and manage all reservations across the system.
-- Dynamic Filtering: Filter reservations dynamically by `status`, `minPrice`, and `maxPrice`.
-- Pagination & Sorting: Paginate reservation results using standard `page` and `size` parameters with optional `sort` sorting.
-- Data Initialization: Automatically seeds two testing users (`admin` and `user`) along with default resources on startup.
-- Global Error Handling: Centralized exception handler providing clean, standardized JSON error maps for validation, security, and bad requests.
+- **JWT-Based Authentication**: Login at `POST /auth/login` to obtain a stateless JWT token.
+- **Role-Based Access Control (RBAC)**: Secure authorization for `ADMIN` and `USER` roles using Spring Security's `@PreAuthorize` method security.
+- **Resource Management**: Complete CRUD for resources (restricted to `ADMIN` for write operations; `USER` has read-only access).
+- **Reservation Lifecycle**: Manage bookings with statuses: `PENDING`, `CONFIRMED`, and `CANCELLED`.
+- **Reservation Ownership**: Users can only see, modify, or delete their own reservations. Administrators have access to view and manage all reservations across the system.
+- **Dynamic Filtering**: Filter reservations dynamically by `status`, `minPrice`, and `maxPrice`.
+- **Pagination & Sorting**: Paginate reservation results using standard `page` and `size` parameters with optional `sort` sorting.
+- **Data Initialization**: Automatically seeds two testing users (`admin` and `user`) along with default resources on startup.
+- **Global Error Handling**: Centralized exception handler providing clean, standardized JSON error maps for validation, security, and bad requests.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- Java: Version 16 or 17+ (Class file compatibility configured for Java 16+)
-- Framework: Spring Boot 2.7.18
-- Security: Spring Security & JWT (using `io.jsonwebtoken`)
-- Database: H2 (in-memory, for quick testing), MySQL, or PostgreSQL
-- Build Tool: Maven
+- **Java**: Version 16 or 17+ (Class file compatibility configured for Java 16+)
+- **Framework**: Spring Boot 2.7.18
+- **Security**: Spring Security & JWT (using `io.jsonwebtoken`)
+- **Database**: H2 (in-memory, for quick testing), MySQL, or PostgreSQL
+- **Build Tool**: Maven
 
 ---
 
@@ -69,9 +68,9 @@ com.example.booking
 
 ## ⚙️ Configuration & Environment Variables
 
-The database is configured in `src/main/resources/application.yml`. By default, it uses an in-memory H2 database for instant, zero-setup testing.
+The database is configured in `src/main/resources/application.yml`. By default, it uses an **in-memory H2 database** for instant, zero-setup testing.
 
-To connect to MySQL or PostgreSQL, configure the following environment variables:
+To connect to **MySQL** or **PostgreSQL**, configure the following environment variables:
 
 | Environment Variable | Default Value | Description |
 |----------------------|---------------|-------------|
@@ -93,7 +92,7 @@ On application startup, the database is automatically seeded with the following 
 | `admin`  | `admin`  | `ADMIN` |
 | `user`   | `user`   | `USER` |
 
-Passwords are securely hashed using BCrypt at runtime.
+*Passwords are securely hashed using BCrypt at runtime.*
 
 ---
 
@@ -108,20 +107,24 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-16"
 .\mvnw.cmd clean spring-boot:run
 ```
 
-The application will launch on port `8081`.
+The application will launch on port **`8081`**.
 
 ---
 
 ## 📖 API Documentation & Postman
 
+### Interactive Swagger UI
+When the application is running, open the interactive Swagger docs to view and test all endpoints:
+👉 **[http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)**
+
 ### Postman Collection
 We have included a pre-configured Postman Collection file in the root of the project:  
 `Resource_Booking_System.postman_collection.json`
 
-How to use:
+**How to use:**
 1. Import this file into Postman.
-2. Send `1. Login - Admin` or `2. Login - User` to get your token.
-3. Paste the token into the collection's `jwt_token` variable under the Variables tab.
+2. Send **`1. Login - Admin`** or **`2. Login - User`** to get your token.
+3. Paste the token into the collection's `jwt_token` variable under the **Variables** tab.
 4. Run any request (Authorization headers are automatically pre-configured!).
 
 ---
