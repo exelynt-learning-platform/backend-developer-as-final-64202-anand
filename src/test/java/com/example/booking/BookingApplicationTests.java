@@ -17,7 +17,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
     "jwt.secret=MySecretKeyForJWTthatIsAtLeast32BytesLong123",
-    "jwt.expiration-ms=3600000"
+    "jwt.expiration-ms=3600000",
+    "seed.admin.password=admin",
+    "seed.user.password=user"
 })
 class BookingApplicationTests {
 
@@ -60,4 +62,3 @@ class BookingApplicationTests {
                 .andExpect(status().isForbidden());
     }
 }
-
