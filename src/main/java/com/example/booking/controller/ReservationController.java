@@ -37,7 +37,11 @@ public class ReservationController {
         String authority = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .findFirst().orElse("ROLE_USER");
-        return Role.valueOf(authority.replace("ROLE_", ""));
+        try {
+            return Role.valueOf(authority.replace("ROLE_", ""));
+        } catch (IllegalArgumentException e) {
+            throw new AccessDeniedException("Invalid role authority: " + authority);
+        }
     }
 
     @GetMapping
