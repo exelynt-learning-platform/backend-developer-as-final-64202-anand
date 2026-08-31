@@ -2,6 +2,7 @@ package com.example.booking.service;
 
 import com.example.booking.dto.ResourceDto;
 import com.example.booking.entity.Resource;
+import com.example.booking.exception.ResourceNotFoundException;
 import com.example.booking.repository.ResourceRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -19,6 +20,12 @@ public class ResourceService {
         return repository.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    public ResourceDto getById(Long id) {
+        Resource entity = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+        return toDto(entity);
+    }
+
     public ResourceDto create(ResourceDto dto) {
         Resource entity = new Resource();
         entity.setName(dto.getName());
@@ -28,7 +35,7 @@ public class ResourceService {
 
     public ResourceDto update(Long id, ResourceDto dto) {
         Resource entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Resource not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
         entity.setName(dto.getName());
         entity.setDescription(dto.getDescription());
         return toDto(repository.save(entity));
@@ -36,7 +43,7 @@ public class ResourceService {
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Resource not found with id: " + id);
+            throw new ResourceNotFoundException("Resource not found with id: " + id);
         }
         repository.deleteById(id);
     }
@@ -45,4 +52,3 @@ public class ResourceService {
         return new ResourceDto(e.getId(), e.getName(), e.getDescription());
     }
 }
-

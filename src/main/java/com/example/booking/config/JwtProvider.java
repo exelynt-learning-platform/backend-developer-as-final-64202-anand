@@ -4,6 +4,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import javax.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 
@@ -17,15 +18,18 @@ public class JwtProvider {
 
     private Key signingKey;
 
-    private synchronized Key getSigningKey() {
-        if (signingKey == null) {
-            if (secret == null || secret.trim().isEmpty() || secret.getBytes().length < 32) {
-                // Cryptographically secure random fallback key if secret is missing or too weak
-                signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-            } else {
-                signingKey = Keys.hmacShaKeyFor(secret.getBytes());
-            }
+    @PostConstruct
+    public void init() {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalStateException("JWT_SECRET environment variable or jwt.secret property must be set and cannot be empty.");
         }
+        if (secret.getBytes().length < 32) {
+            throw new IllegalArgumentException("JWT secret key must be at least 256 bits (32 bytes) long for HS256 algorithm.");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
+    private Key getSigningKey() {
         return signingKey;
     }
 
