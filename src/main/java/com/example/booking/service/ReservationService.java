@@ -29,13 +29,26 @@ public class ReservationService {
         this.userRepository = userRepository;
     }
 
+    private ReservationStatus validateAndParseStatus(String statusStr) {
+        if (statusStr == null || statusStr.isBlank()) {
+            return null;
+        }
+        for (ReservationStatus s : ReservationStatus.values()) {
+            if (s.name().equalsIgnoreCase(statusStr.trim())) {
+                return s;
+            }
+        }
+        throw new IllegalArgumentException("Invalid reservation status value: " + statusStr);
+    }
+
     public Page<ReservationDto> findAll(ReservationFilterDto filter, Pageable pageable,
                                         String username, Role role) {
         Specification<Reservation> spec = (root, query, cb) -> cb.conjunction();
 
         if (filter.getStatus() != null && !filter.getStatus().isBlank()) {
+            ReservationStatus statusEnum = validateAndParseStatus(filter.getStatus());
             spec = spec.and((root, query, cb) ->
-                    cb.equal(root.get("status"), ReservationStatus.valueOf(filter.getStatus())));
+                    cb.equal(root.get("status"), statusEnum));
         }
         if (filter.getMinPrice() != null) {
             spec = spec.and((root, query, cb) ->
@@ -94,18 +107,7 @@ public class ReservationService {
         if (dto.getEndTime() != null) reservation.setEndTime(dto.getEndTime());
         if (dto.getPrice() != null) reservation.setPrice(dto.getPrice());
         if (dto.getStatus() != null) {
-            boolean valid = false;
-            for (ReservationStatus s : ReservationStatus.values()) {
-                if (s.name().equals(dto.getStatus())) {
-                    valid = true;
-                    break;
-                }
-            }
-            if (!valid) {
-                throw new IllegalArgumentException("Invalid status: " + dto.getStatus());
-            }
-            
-            ReservationStatus newStatus = ReservationStatus.valueOf(dto.getStatus());
+            ReservationStatus newStatus = validateAndParseStatus(dto.getStatus());
             
             // Business logic check: Only ADMIN can confirm reservations
             if (role == Role.USER && newStatus == ReservationStatus.CONFIRMED && reservation.getStatus() != ReservationStatus.CONFIRMED) {
