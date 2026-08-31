@@ -9,14 +9,24 @@ import java.util.Date;
 
 @Component
 public class JwtProvider {
-    @Value("${jwt.secret:MySecretKeyForJWTthatIsAtLeast32BytesLong123}")
+    @Value("${jwt.secret:}")
     private String secret;
 
     @Value("${jwt.expiration-ms:3600000}")
     private long validityInMs;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+    private Key signingKey;
+
+    private synchronized Key getSigningKey() {
+        if (signingKey == null) {
+            if (secret == null || secret.trim().isEmpty() || secret.getBytes().length < 32) {
+                // Cryptographically secure random fallback key if secret is missing or too weak
+                signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+            } else {
+                signingKey = Keys.hmacShaKeyFor(secret.getBytes());
+            }
+        }
+        return signingKey;
     }
 
     public String generateToken(String username, String role) {
@@ -48,4 +58,3 @@ public class JwtProvider {
                 .getBody();
     }
 }
-

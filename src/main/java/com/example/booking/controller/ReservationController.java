@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,10 +24,16 @@ public class ReservationController {
     }
 
     private String getUsername(Authentication auth) {
+        if (auth == null) {
+            throw new AccessDeniedException("User not authenticated");
+        }
         return auth.getName();
     }
 
     private Role getRole(Authentication auth) {
+        if (auth == null || auth.getAuthorities() == null) {
+            return Role.USER;
+        }
         String authority = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .findFirst().orElse("ROLE_USER");
