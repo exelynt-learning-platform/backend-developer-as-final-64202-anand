@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,7 +79,7 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
         if (role == Role.USER && !reservation.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Access denied: you can only modify your own reservations");
+            throw new AccessDeniedException("Access denied: you can only modify your own reservations");
         }
         if (dto.getStartTime() != null && dto.getEndTime() != null
                 && !dto.getEndTime().isAfter(dto.getStartTime())) {
@@ -93,7 +94,25 @@ public class ReservationService {
         if (dto.getEndTime() != null) reservation.setEndTime(dto.getEndTime());
         if (dto.getPrice() != null) reservation.setPrice(dto.getPrice());
         if (dto.getStatus() != null) {
-            reservation.setStatus(ReservationStatus.valueOf(dto.getStatus()));
+            boolean valid = false;
+            for (ReservationStatus s : ReservationStatus.values()) {
+                if (s.name().equals(dto.getStatus())) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                throw new IllegalArgumentException("Invalid status: " + dto.getStatus());
+            }
+            
+            ReservationStatus newStatus = ReservationStatus.valueOf(dto.getStatus());
+            
+            // Business logic check: Only ADMIN can confirm reservations
+            if (role == Role.USER && newStatus == ReservationStatus.CONFIRMED && reservation.getStatus() != ReservationStatus.CONFIRMED) {
+                throw new AccessDeniedException("Standard users are not authorized to confirm reservations");
+            }
+            
+            reservation.setStatus(newStatus);
         }
         return toDto(reservationRepository.save(reservation));
     }
@@ -102,7 +121,7 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
         if (role == Role.USER && !reservation.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("Access denied: you can only delete your own reservations");
+            throw new AccessDeniedException("Access denied: you can only delete your own reservations");
         }
         reservationRepository.delete(reservation);
     }

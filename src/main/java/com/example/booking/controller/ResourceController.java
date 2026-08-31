@@ -26,9 +26,7 @@ public class ResourceController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<ResourceDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.findAll().stream()
-                .filter(r -> r.getId().equals(id)).findFirst()
-                .orElseThrow(() -> new RuntimeException("Resource not found")));
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
