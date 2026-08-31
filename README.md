@@ -15,7 +15,7 @@ The system allows users to search available resources and manage their own reser
 - **Reservation Ownership**: Users can only see, modify, or delete their own reservations. Administrators have access to view and manage all reservations across the system.
 - **Dynamic Filtering**: Filter reservations dynamically by `status`, `minPrice`, and `maxPrice`.
 - **Pagination & Sorting**: Paginate reservation results using standard `page` and `size` parameters with optional `sort` sorting.
-- **Data Initialization**: Automatically seeds two testing users (`admin` and `user`) along with default resources on startup.
+- **Data Initialization**: Automatically seeds testing users (`admin` and `user`) along with default resources on startup (disabled in `prod` profile).
 - **Global Error Handling**: Centralized exception handler providing clean, standardized JSON error maps for validation, security, and bad requests.
 
 ---
@@ -36,32 +36,32 @@ The system allows users to search available resources and manage their own reser
 com.example.booking
  ├── BookingApplication.java         # Main bootstrap class
  ├── config/                         # Configuration files
- │    ├── DataInitializer.java       # Seeds initial users & resources
- │    ├── JwtAuthenticationFilter.java # Intercepts and parses JWT tokens
- │    ├── JwtProvider.java           # Generates and validates tokens
- │    └── SecurityConfig.java        # Security filter chains and RBAC rules
+ ├── │    ├── DataInitializer.java       # Seeds initial users & resources
+ ├── │    ├── JwtAuthenticationFilter.java # Intercepts and parses JWT tokens
+ ├── │    ├── JwtProvider.java           # Generates and validates tokens
+ ├── │    └── SecurityConfig.java        # Security filter chains and RBAC rules
  ├── controller/                     # REST API Controllers
- │    ├── AuthController.java        # Handles POST /auth/login
- │    ├── ResourceController.java    # Resource CRUD
- │    └── ReservationController.java # Reservation CRUD
+ ├── │    ├── AuthController.java        # Handles POST /auth/login
+ ├── │    ├── ResourceController.java    # Resource CRUD
+ ├── │    └── ReservationController.java # Reservation CRUD
  ├── dto/                            # Data Transfer Objects
- │    ├── AuthRequest.java
- │    ├── AuthResponse.java
- │    ├── ResourceDto.java
- │    ├── ReservationDto.java
- │    └── ReservationFilterDto.java
+ ├── │    ├── AuthRequest.java
+ ├── │    ├── AuthResponse.java
+ ├── │    ├── ResourceDto.java
+ ├── │    ├── ReservationDto.java
+ ├── │    └── ReservationFilterDto.java
  ├── entity/                         # JPA Entities
- │    ├── Role.java
- │    ├── User.java
- │    ├── Resource.java
- │    ├── ReservationStatus.java
- │    └── Reservation.java
+ ├── │    ├── Role.java
+ ├── │    ├── User.java
+ ├── │    ├── Resource.java
+ ├── │    ├── ReservationStatus.java
+ ├── │    └── Reservation.java
  ├── exception/                      # Exception handling
- │    └── GlobalExceptionHandler.java # Map exceptions to HTTP status codes
- └── repository/                     # Spring Data JPA repositories
-      ├── UserRepository.java
-      ├── ResourceRepository.java
-      └── ReservationRepository.java
+ ├── │    └── GlobalExceptionHandler.java # Map exceptions to HTTP status codes
+ ├── repository/                     # Spring Data JPA repositories
+ └──      ├── UserRepository.java
+          ├── ResourceRepository.java
+          └── ReservationRepository.java
 ```
 
 ---
@@ -70,7 +70,7 @@ com.example.booking
 
 The database is configured in `src/main/resources/application.yml`. By default, it uses an **in-memory H2 database** for instant, zero-setup testing.
 
-To connect to **MySQL** or **PostgreSQL**, configure the following environment variables:
+To run the application, configure the following environment variables:
 
 | Environment Variable | Default Value | Description |
 |----------------------|---------------|-------------|
@@ -78,19 +78,21 @@ To connect to **MySQL** or **PostgreSQL**, configure the following environment v
 | `DB_DRIVER`          | `org.h2.Driver` | JDBC driver class name |
 | `DB_USERNAME`        | `sa` | Database username |
 | `DB_PASSWORD`        | (empty) | Database password |
-| `JWT_SECRET`         | `MySecretKeyForJWTthatIsAtLeast32BytesLong123` | Token signature secret |
+| `JWT_SECRET`         | (Required, no default value) | Token signature secret key (min 32 bytes) |
 | `JWT_EXPIRATION_MS`  | `3600000` (1 hour) | JWT token lifespan |
+| `SEED_ADMIN_PASSWORD` | (Random UUID on startup) | Admin user seed password (dev environment) |
+| `SEED_USER_PASSWORD`  | (Random UUID on startup) | Standard user seed password (dev environment) |
 
 ---
 
 ## 💿 Seed Data & Test Credentials
 
-On application startup, the database is automatically seeded with the following credentials:
+On application startup, the database is automatically seeded with default users. The passwords are not stored in the codebase for security compliance. They can be set using environment variables, or will default to dynamically generated random UUIDs printed to the console logs on startup:
 
-| Username | Password | Role |
-|----------|----------|------|
-| `admin`  | `admin`  | `ADMIN` |
-| `user`   | `user`   | `USER` |
+| Username | Configuration Variable | Default Value | Role |
+|----------|------------------------|---------------|------|
+| `admin`  | `SEED_ADMIN_PASSWORD`  | Random UUID (Printed on Startup) | `ADMIN` |
+| `user`   | `SEED_USER_PASSWORD`   | Random UUID (Printed on Startup) | `USER` |
 
 *Passwords are securely hashed using BCrypt at runtime.*
 
@@ -101,9 +103,12 @@ On application startup, the database is automatically seeded with the following 
 ### 1. Run via Maven Wrapper (No Maven Install Required)
 Make sure you run these commands in the project root directory (`C:\Users\HP\OneDrive\Desktop\Resource Booking System`):
 
-Set your Java 16/17 JDK path and boot the application:
+Set your Java 16/17 JDK path, configure mandatory secret properties, and boot the application:
 ```powershell
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-16"
+$env:JWT_SECRET = "MySecretKeyForJWTthatIsAtLeast32BytesLong123"
+$env:SEED_ADMIN_PASSWORD = "admin"
+$env:SEED_USER_PASSWORD = "user"
 .\mvnw.cmd clean spring-boot:run
 ```
 
