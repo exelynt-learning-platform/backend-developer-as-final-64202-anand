@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,8 +62,10 @@ public class ReservationService {
                     cb.lessThanOrEqualTo(root.get("price"), filter.getMaxPrice()));
         }
         if (role == Role.USER) {
-            spec = spec.and((root, query, cb) ->
-                    cb.equal(root.join("user").get("username"), username));
+            spec = spec.and((root, query, cb) -> {
+                query.distinct(true);
+                return cb.equal(root.join("user").get("username"), username);
+            });
         }
 
         Page<Reservation> page = reservationRepository.findAll(spec, pageable);
@@ -76,6 +79,12 @@ public class ReservationService {
                 && !dto.getEndTime().isAfter(dto.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
         }
+        
+        // Enforce overlapping reservation validation
+        if (reservationRepository.existsOverlapping(dto.getResourceId(), dto.getStartTime(), dto.getEndTime(), null)) {
+            throw new IllegalArgumentException("The resource is already booked for the requested time range.");
+        }
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         Resource resource = resourceRepository.findById(dto.getResourceId())
@@ -100,6 +109,17 @@ public class ReservationService {
                 && !dto.getEndTime().isAfter(dto.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
         }
+
+        // Validate overlapping times if start/end times or resource changes
+        LocalDateTime finalStart = dto.getStartTime() != null ? dto.getStartTime() : reservation.getStartTime();
+        LocalDateTime finalEnd = dto.getEndTime() != null ? dto.getEndTime() : reservation.getEndTime();
+        Long resourceId = dto.getResourceId() != null ? dto.getResourceId() : reservation.getResource().getId();
+        
+        boolean isCancelling = dto.getStatus() != null && validateAndParseStatus(dto.getStatus()) == ReservationStatus.CANCELLED;
+        if (!isCancelling && reservationRepository.existsOverlapping(resourceId, finalStart, finalEnd, id)) {
+            throw new IllegalArgumentException("The resource is already booked for the requested time range.");
+        }
+
         if (dto.getResourceId() != null) {
             Resource resource = resourceRepository.findById(dto.getResourceId())
                     .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + dto.getResourceId()));
