@@ -30,8 +30,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
+            boolean isValid = false;
             try {
-                if (jwtProvider.validateToken(token)) {
+                isValid = jwtProvider.validateToken(token);
+            } catch (Exception e) {
+                logger.warn("Invalid JWT format: {}", e.getMessage());
+            }
+
+            if (isValid) {
+                try {
                     Claims claims = jwtProvider.getClaims(token);
                     String username = claims.getSubject();
                     String roleName = (String) claims.get("role");
@@ -41,9 +48,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName))
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
+                } catch (Exception e) {
+                    logger.error("Failed to parse JWT claims: {}", e.getMessage());
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Failed to parse authentication claims\"}");
+                    return;
                 }
-            } catch (Exception e) {
-                logger.warn("Invalid JWT: {}", e.getMessage());
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Invalid or expired JWT token\"}");
+                return;
             }
         }
         filterChain.doFilter(request, response);
