@@ -30,7 +30,7 @@ public class ReservationService {
 
     public Page<ReservationDto> findAll(ReservationFilterDto filter, Pageable pageable,
                                         String username, Role role) {
-        Specification<Reservation> spec = Specification.where(null);
+        Specification<Reservation> spec = (root, query, cb) -> cb.conjunction();
 
         if (filter.getStatus() != null && !filter.getStatus().isBlank()) {
             spec = spec.and((root, query, cb) ->
@@ -113,4 +113,3 @@ public class ReservationService {
                 e.getPrice(), e.getStatus().name());
     }
 }
-
