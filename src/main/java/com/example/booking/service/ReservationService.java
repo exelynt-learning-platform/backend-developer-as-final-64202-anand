@@ -75,8 +75,11 @@ public class ReservationService {
     }
 
     public ReservationDto create(ReservationDto dto, String username) {
-        if (dto.getStartTime() != null && dto.getEndTime() != null
-                && !dto.getEndTime().isAfter(dto.getStartTime())) {
+        // Enforce strict null checks for reservation dates to prevent NullPointerException
+        if (dto.getStartTime() == null || dto.getEndTime() == null) {
+            throw new IllegalArgumentException("Start time and end time must not be null.");
+        }
+        if (!dto.getEndTime().isAfter(dto.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
         }
         
@@ -105,14 +108,19 @@ public class ReservationService {
         if (role == Role.USER && !reservation.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("Access denied: you can only modify your own reservations");
         }
-        if (dto.getStartTime() != null && dto.getEndTime() != null
-                && !dto.getEndTime().isAfter(dto.getStartTime())) {
+
+        LocalDateTime finalStart = dto.getStartTime() != null ? dto.getStartTime() : reservation.getStartTime();
+        LocalDateTime finalEnd = dto.getEndTime() != null ? dto.getEndTime() : reservation.getEndTime();
+        
+        // Enforce strict null checks for final resolved dates
+        if (finalStart == null || finalEnd == null) {
+            throw new IllegalArgumentException("Start time and end time cannot be null.");
+        }
+        if (!finalEnd.isAfter(finalStart)) {
             throw new IllegalArgumentException("End time must be after start time");
         }
 
         // Validate overlapping times if start/end times or resource changes
-        LocalDateTime finalStart = dto.getStartTime() != null ? dto.getStartTime() : reservation.getStartTime();
-        LocalDateTime finalEnd = dto.getEndTime() != null ? dto.getEndTime() : reservation.getEndTime();
         Long resourceId = dto.getResourceId() != null ? dto.getResourceId() : reservation.getResource().getId();
         
         boolean isCancelling = dto.getStatus() != null && validateAndParseStatus(dto.getStatus()) == ReservationStatus.CANCELLED;
@@ -125,8 +133,8 @@ public class ReservationService {
                     .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + dto.getResourceId()));
             reservation.setResource(resource);
         }
-        if (dto.getStartTime() != null) reservation.setStartTime(dto.getStartTime());
-        if (dto.getEndTime() != null) reservation.setEndTime(dto.getEndTime());
+        reservation.setStartTime(finalStart);
+        reservation.setEndTime(finalEnd);
         if (dto.getPrice() != null) reservation.setPrice(dto.getPrice());
         if (dto.getStatus() != null) {
             ReservationStatus newStatus = validateAndParseStatus(dto.getStatus());

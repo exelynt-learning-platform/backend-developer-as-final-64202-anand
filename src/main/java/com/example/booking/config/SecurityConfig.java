@@ -1,6 +1,7 @@
 package com.example.booking.config;
 
 import com.example.booking.service.CustomUserDetailsService;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,10 +38,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            /*
+             * CSRF protection is disabled because this API is completely stateless and uses 
+             * JWT tokens stored in custom request headers (Authorization: Bearer <token>).
+             * Since browsers do not automatically attach custom headers to cross-origin requests
+             * (unlike session cookies), CSRF attacks are inherently mitigated.
+             * Ensure that this application never uses cookie-based sessions.
+             */
             .csrf().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authenticationProvider(authenticationProvider())
+            .exceptionHandling()
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Unauthorized: Invalid or missing authentication token\"}");
+                })
+            .and()
             .authorizeHttpRequests()
                 .requestMatchers(
                     new AntPathRequestMatcher("/auth/**"),
