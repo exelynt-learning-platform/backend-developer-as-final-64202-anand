@@ -59,6 +59,6 @@ class BookingApplicationTests {
     @Test
     void testUnauthenticatedGetResourcesFails() throws Exception {
         mockMvc.perform(get("/api/v1/resources"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 }

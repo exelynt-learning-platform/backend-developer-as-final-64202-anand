@@ -30,15 +30,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            boolean isValid = false;
             try {
-                isValid = jwtProvider.validateToken(token);
-            } catch (Exception e) {
-                logger.warn("Invalid JWT format: {}", e.getMessage());
-            }
-
-            if (isValid) {
-                try {
+                if (jwtProvider.validateToken(token)) {
                     Claims claims = jwtProvider.getClaims(token);
                     String username = claims.getSubject();
                     String roleName = (String) claims.get("role");
@@ -48,18 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName))
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                } catch (Exception e) {
-                    logger.error("Failed to parse JWT claims: {}", e.getMessage());
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"Failed to parse authentication claims\"}");
-                    return;
+                } else {
+                    logger.warn("Invalid JWT signature or token format");
+                    SecurityContextHolder.clearContext();
                 }
-            } else {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"Invalid or expired JWT token\"}");
-                return;
+            } catch (Exception e) {
+                logger.warn("Failed to process JWT: {}", e.getMessage());
+                SecurityContextHolder.clearContext();
             }
         }
         filterChain.doFilter(request, response);
