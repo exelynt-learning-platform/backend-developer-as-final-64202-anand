@@ -3,6 +3,7 @@ package com.example.booking.service;
 import com.example.booking.dto.ReservationDto;
 import com.example.booking.dto.ReservationFilterDto;
 import com.example.booking.entity.*;
+import com.example.booking.exception.ResourceNotFoundException;
 import com.example.booking.repository.ReservationRepository;
 import com.example.booking.repository.ResourceRepository;
 import com.example.booking.repository.UserRepository;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,9 +77,9 @@ public class ReservationService {
             throw new IllegalArgumentException("End time must be after start time");
         }
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         Resource resource = resourceRepository.findById(dto.getResourceId())
-                .orElseThrow(() -> new RuntimeException("Resource not found with id: " + dto.getResourceId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + dto.getResourceId()));
         Reservation reservation = new Reservation();
         reservation.setUser(user);
         reservation.setResource(resource);
@@ -90,7 +92,7 @@ public class ReservationService {
 
     public ReservationDto update(Long id, ReservationDto dto, String username, Role role) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with id: " + id));
         if (role == Role.USER && !reservation.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("Access denied: you can only modify your own reservations");
         }
@@ -100,7 +102,7 @@ public class ReservationService {
         }
         if (dto.getResourceId() != null) {
             Resource resource = resourceRepository.findById(dto.getResourceId())
-                    .orElseThrow(() -> new RuntimeException("Resource not found with id: " + dto.getResourceId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + dto.getResourceId()));
             reservation.setResource(resource);
         }
         if (dto.getStartTime() != null) reservation.setStartTime(dto.getStartTime());
@@ -121,7 +123,7 @@ public class ReservationService {
 
     public void delete(Long id, String username, Role role) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with id: " + id));
         if (role == Role.USER && !reservation.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("Access denied: you can only delete your own reservations");
         }
